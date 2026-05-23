@@ -3,6 +3,11 @@
     <div class="auth-card">
       <!-- Logo -->
       <div class="auth-logo">
+        <!-- Indicateur réveil serveur -->
+        <div v-if="waking" class="waking-box">
+          <span class="loading-spinner"></span>
+          <span>Démarrage du serveur en cours<span class="dots">...</span></span>
+        </div>
         <div class="auth-logo-icon">🅿️</div>
         <div class="auth-logo-name">Parking Manager</div>
         <div class="auth-logo-sub">Système de gestion</div>
@@ -61,21 +66,59 @@
   </div>
 </template>
 
+<style scoped>
+.waking-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(243,156,18,0.1);
+  border: 1px solid rgba(243,156,18,0.3);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--accent-orange);
+  margin-bottom: 16px;
+}
+
+.dots {
+  animation: blink 1.2s steps(3, end) infinite;
+}
+
+@keyframes blink {
+  0%  { content: ''; }
+  33% { content: '.'; }
+  66% { content: '..'; }
+  100%{ content: '...'; }
+}
+</style>
+
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth.js'
 import { useToastStore } from '@/store/toast.js'
 import api from '@/utils/api.js'
 
-const router = useRouter()
-const auth   = useAuthStore()
-const toast  = useToastStore()
-
+const router  = useRouter()
+const auth    = useAuthStore()
+const toast   = useToastStore()
 const form    = ref({ email: '', password: '' })
 const error   = ref('')
 const loading = ref(false)
 const showPwd = ref(false)
+const waking  = ref(false) // ← serveur en cours de réveil
+
+// Au chargement de la page, on "réveille" le serveur en avance
+onMounted(async () => {
+  try {
+    waking.value = true
+    await api.get('/health')
+  } catch {
+    // ignore
+  } finally {
+    waking.value = false
+  }
+})
 
 async function submit() {
   if (!form.value.email || !form.value.password) {

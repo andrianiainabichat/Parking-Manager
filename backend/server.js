@@ -115,4 +115,7 @@ app.listen(PORT, () => {
   console.log(`\n🅿️  Parking Manager API → http://localhost:${PORT}`)
   console.log(`🌍  Environnement : ${process.env.NODE_ENV || 'development'}`)
   console.log(`🔗  CORS autorisé : ${allowedOrigins.join(', ')}\n`)
+  // Keep-alive pour Render Free Plan
+const keepAlive = require('./utils/keepAlive')
+keepAlive()
 })

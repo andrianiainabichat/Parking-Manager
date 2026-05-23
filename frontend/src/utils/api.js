@@ -1,6 +1,5 @@
 import axios from 'axios'
 
-// Détection automatique prod/dev
 const isProd = window.location.hostname !== 'localhost'
 const baseURL = isProd
   ? 'https://parking-manager-api.onrender.com/api'
@@ -8,7 +7,7 @@ const baseURL = isProd
 
 const api = axios.create({
   baseURL,
-  timeout: 15000,
+  timeout: 60000, // ← 60 secondes au lieu de 15
   headers: { 'Content-Type': 'application/json' }
 })
 
