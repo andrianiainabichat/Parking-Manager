@@ -1,15 +1,21 @@
 import axios from 'axios'
 
-// En production : VITE_API_URL doit être défini sur Vercel
-// En développement : proxy Vite vers localhost:3000
-const baseURL = import.meta.env.VITE_API_URL || '/api'
-
-console.log('API baseURL:', baseURL) // Pour déboguer
+// Détection automatique prod/dev
+const isProd = window.location.hostname !== 'localhost'
+const baseURL = isProd
+  ? 'https://parking-manager-api.onrender.com/api'
+  : '/api'
 
 const api = axios.create({
   baseURL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' }
+})
+
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('pm_token')
+  if (token) config.headers['Authorization'] = `Bearer ${token}`
+  return config
 })
 
 api.interceptors.response.use(
