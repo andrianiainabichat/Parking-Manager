@@ -5,22 +5,34 @@ require('dotenv').config()
 const app = express()
 const authMiddleware = require('./middleware/auth')
 
-// CORS : accepte le frontend Vercel + localhost en dev
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:4173',
-  process.env.FRONTEND_URL
-].filter(Boolean)
-
+// CORS — autoriser toutes les origines Vercel + localhost
 app.use(cors({
   origin: (origin, callback) => {
-    // Autoriser les requêtes sans origin (Postman, mobile)
+    // Autoriser si pas d'origin (Postman, mobile natif)
     if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) return callback(null, true)
+
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:4173',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean)
+
+    // Autoriser tous les sous-domaines vercel.app
+    const isVercel = origin.endsWith('.vercel.app')
+    const isAllowed = allowed.includes(origin) || isVercel
+
+    if (isAllowed) return callback(null, true)
+
+    console.error(`CORS bloqué pour : ${origin}`)
     callback(new Error(`CORS bloqué pour : ${origin}`))
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
+
+// Répondre aux preflight OPTIONS
+app.options('*', cors())
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -36,7 +48,6 @@ app.use('/api/tarifs',   authMiddleware, require('./routes/tarifs'))
 app.use('/api/entrees',  authMiddleware, require('./routes/entrees'))
 app.use('/api/sorties',  authMiddleware, require('./routes/sorties'))
 
-// Dashboard protégé
 app.get('/api/dashboard', authMiddleware, async (req, res) => {
   const db = require('./config/db')
   try {
@@ -99,12 +110,10 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.path} non trouvée` })
 })
 
-// Error handler global
 app.use((err, req, res, next) => {
   console.error('Erreur serveur:', err.message)
   res.status(500).json({ success: false, message: err.message })
@@ -114,8 +123,9 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`\n🅿️  Parking Manager API → http://localhost:${PORT}`)
   console.log(`🌍  Environnement : ${process.env.NODE_ENV || 'development'}`)
-  console.log(`🔗  CORS autorisé : ${allowedOrigins.join(', ')}\n`)
-  // Keep-alive pour Render Free Plan
+  console.log(`🔗  FRONTEND_URL : ${process.env.FRONTEND_URL || 'non défini'}\n`)
+})
+
+// Keep-alive pour Render Free Plan
 const keepAlive = require('./utils/keepAlive')
 keepAlive()
-})
