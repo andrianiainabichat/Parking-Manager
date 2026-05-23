@@ -14,13 +14,16 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
-      // Proxy uniquement en développement local
-      proxy: env.VITE_API_URL ? {} : {
+      proxy: {
         '/api': {
           target: 'http://localhost:3000',
           changeOrigin: true
         }
       }
+    },
+    // En production, VITE_API_URL remplace le proxy
+    define: {
+      __API_URL__: JSON.stringify(env.VITE_API_URL || '')
     }
   }
 })

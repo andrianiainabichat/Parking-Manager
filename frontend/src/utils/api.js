@@ -1,9 +1,13 @@
 import axios from 'axios'
 
+// En production : VITE_API_URL doit être défini sur Vercel
+// En développement : proxy Vite vers localhost:3000
+const baseURL = import.meta.env.VITE_API_URL || '/api'
+
+console.log('API baseURL:', baseURL) // Pour déboguer
+
 const api = axios.create({
-  // En dev : proxy Vite vers localhost:3000
-  // En prod : variable d'environnement VITE_API_URL
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' }
 })
